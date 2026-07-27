@@ -1,0 +1,28 @@
+/**
+ * @description 存放less全局变量、混合等
+ */
+
+@text-blue: #0077ff;
+@border-color: #cfcfcf;
+@hover-bg: #ecf5ff;
+@background-color-grey: #f5f6f7;
+@border-blue-color: #0a74ff;
+@blue-light: #ebf3ff;
+
+// 文字超出...显示
+.common-ellipsis(@width) {
+  max-width: @width;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.common-flex(@jc: center, @ai: center) {
+  display: flex;
+  justify-content: @jc;
+  align-items: @ai;
+}
+// 底部安全内边距
+.hxe-safe-bottom(@base: 0px) {
+  padding-bottom: calc(@base + constant(safe-area-inset-bottom));
+  padding-bottom: calc(@base + env(safe-area-inset-bottom));
+}
