@@ -1,7 +1,14 @@
+import StaticInviteView from '@/views/invite/StaticInviteView.vue'
 import type { RouteLocationNormalized, RouteRecordRaw } from "vue-router";
 import { createRouter, createWebHistory } from "vue-router";
 
 const constance: RouteRecordRaw[] = [
+  {
+    path: '/invite/:slug',
+    name: 'static-invite',
+    component: StaticInviteView,
+    meta: { title: '活动邀请函' },
+  },
   {
     path: "/",
     redirect: "/dashboard",
