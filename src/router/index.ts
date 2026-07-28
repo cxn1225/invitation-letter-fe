@@ -13,13 +13,7 @@ const constance: RouteRecordRaw[] = [
     name: "dashboard",
     component: () => import("@/views/dashboard/dashboard.vue"),
     meta: { title: "首页" },
-  },
-  {
-    path: "/login",
-    name: "login",
-    component: () => import("@/views/login/login.vue"),
-    meta: { title: "登录" },
-  },
+  }
 ];
 
 export const router = createRouter({
