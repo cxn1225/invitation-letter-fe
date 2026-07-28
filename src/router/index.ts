@@ -1,7 +1,19 @@
+import StaticInviteView from '@/views/invite/StaticInviteView.vue'
+import StaticCheckinView from '@/views/checkin/StaticCheckinView.vue'
 import type { RouteLocationNormalized, RouteRecordRaw } from "vue-router";
 import { createRouter, createWebHistory } from "vue-router";
 
 const constance: RouteRecordRaw[] = [
+  {
+    path: '/checkin/invite/:slug',
+    name: 'static-invite',
+    component: StaticInviteView,
+  },
+  {
+    path: '/checkin/live/:slug',
+    name: 'static-checkin-live',
+    component: StaticCheckinView,
+  },
   {
     path: "/",
     redirect: "/dashboard",
