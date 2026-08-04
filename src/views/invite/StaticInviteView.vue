@@ -46,6 +46,7 @@ const formatAgendaRange = (timeLabel: string, index: number) => {
   return formatAgendaTime(end ? timeLabel + '-' + end : timeLabel)
 }
 const submitAttendance = async () => {
+  if (submitting.value) return
   attendanceFormError.value = ''
   const name = attendanceName.value.trim()
   const phone = attendancePhone.value.trim().replace(/\s+/g, '')
@@ -167,7 +168,7 @@ const submitAttendance = async () => {
             <input v-model="attendancePhone" type="tel" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="请输入手机号" class="attendance-input" />
           </label>
           <p v-if="attendanceFormError" class="attendance-error">{{ attendanceFormError }}</p>
-          <button type="submit" class="attendance-button" :disabled="submitting">{{ submitting ? '提交中…' : '确认参加' }}</button>
+          <button type="submit" class="attendance-button" :disabled="submitting">确认参加</button>
         </form>
         <div v-else class="attendance-notice">
           <strong>已收到您的出席意向</strong>
