@@ -127,7 +127,7 @@ const submitAttendance = () => {
           <button type="submit" class="attendance-button">&#30830;&#35748;&#21442;&#21152;</button>
         </form>
         <div v-else class="attendance-notice">
-          <strong>&#24050;&#25910;&#21040;&#24744;&#30340;&#20986;&#24109;&#24847;&#21521;</strong>
+          <strong>已收到您的出席意向</strong>
           <span>{{ attendanceName }} · {{ attendancePhone }}</span>
         </div>
       </section>
