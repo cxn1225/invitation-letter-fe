@@ -70,7 +70,7 @@ const submitAttendance = () => {
         :class="{ 'invite-header--with-image': invite.backgroundImageUrl }"
         :style="invite.backgroundImageUrl ? { backgroundImage: 'linear-gradient(180deg, rgba(15,23,42,.08), rgba(15,23,42,.76)), url(' + invite.backgroundImageUrl + ')' } : undefined"
       >
-        <p class="invite-eyebrow">&#27963;&#21160;&#36992;&#35831;&#20989;</p>
+        <p class="invite-eyebrow">活动邀请函</p>
         <h1 class="invite-title">{{ invite.title }}</h1>
         <p v-if="invite.venue" class="invite-meta">{{ invite.venue }}</p>
         <p v-if="timeRangeText" class="invite-meta">{{ timeRangeText }}</p>
@@ -102,7 +102,7 @@ const submitAttendance = () => {
       </section>
 
       <section v-if="!hasAgendaBlock && invite.agenda.length" class="invite-card">
-        <h2 class="invite-section-title">&#27963;&#21160;&#35758;&#31243;</h2>
+        <h2 class="invite-section-title">活动议程</h2>
         <ol class="agenda-timeline">
           <li v-for="(item, index) in invite.agenda" :key="item.id" class="agenda-timeline__item">
             <time class="agenda-timeline__time">{{ formatAgendaRange(item.timeLabel, index) }}</time>
@@ -113,18 +113,18 @@ const submitAttendance = () => {
       </section>
 
       <section class="invite-card attendance-card">
-        <h2 class="invite-section-title">&#30830;&#35748;&#20986;&#24109;</h2>
+        <h2 class="invite-section-title">确认出席</h2>
         <form v-if="!attendanceSubmitted" class="attendance-form" @submit.prevent="submitAttendance">
           <label class="attendance-label">
-            <span>&#22995;&#21517;</span>
-            <input v-model="attendanceName" type="text" autocomplete="name" placeholder="&#35831;&#36755;&#20837;&#22995;&#21517;" class="attendance-input" />
+            <span>姓名</span>
+            <input v-model="attendanceName" type="text" autocomplete="name" placeholder="请输入姓名" class="attendance-input" />
           </label>
           <label class="attendance-label">
-            <span>&#25163;&#26426;&#21495;</span>
-            <input v-model="attendancePhone" type="tel" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="&#35831;&#36755;&#20837;&#25163;&#26426;&#21495;" class="attendance-input" />
+            <span>手机号</span>
+            <input v-model="attendancePhone" type="tel" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="请输入手机号" class="attendance-input" />
           </label>
           <p v-if="attendanceFormError" class="attendance-error">{{ attendanceFormError }}</p>
-          <button type="submit" class="attendance-button">&#30830;&#35748;&#21442;&#21152;</button>
+          <button type="submit" class="attendance-button">确认参加</button>
         </form>
         <div v-else class="attendance-notice">
           <strong>已收到您的出席意向</strong>
