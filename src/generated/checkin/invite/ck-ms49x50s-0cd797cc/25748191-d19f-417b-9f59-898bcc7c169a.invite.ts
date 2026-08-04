@@ -37,8 +37,8 @@ const invite: StaticInvitePage = {
   "agenda": [],
   "backgroundImageUrl": null,
   "confirmApi": {
-    "url": "https://api.example.com/activity/invite-confirm",
-    "timeoutMs": 10000
+    "url": "https://collect-gateway.tingxiner.net/collect-service/ads-collect/report",
+    "timeoutMs": 20000
   },
   "venueLead": null
 }
