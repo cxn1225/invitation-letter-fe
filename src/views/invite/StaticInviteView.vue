@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { showFailToast, showSuccessToast } from 'vant'
+import 'vant/es/toast/style'
 import { useRoute } from 'vue-router'
 import type { StaticInvitePage } from '@/generated/checkin/types'
 
@@ -61,6 +63,7 @@ const submitAttendance = async () => {
   const currentInvite = invite.value
   if (!currentInvite) {
     attendanceFormError.value = '邀请函数据不存在'
+    showFailToast(attendanceFormError.value)
     return
   }
 
@@ -92,6 +95,7 @@ const submitAttendance = async () => {
     attendanceName.value = name
     attendancePhone.value = phone
     attendanceSubmitted.value = true
+    showSuccessToast(result?.message || '确认参加成功')
   } catch (error) {
     attendanceFormError.value =
       error instanceof DOMException && error.name === 'AbortError'
@@ -99,6 +103,7 @@ const submitAttendance = async () => {
         : error instanceof Error
           ? error.message
           : '提交失败，请稍后重试'
+    showFailToast(attendanceFormError.value)
   } finally {
     window.clearTimeout(timeoutId)
     submitting.value = false
