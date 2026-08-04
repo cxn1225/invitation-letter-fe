@@ -1,6 +1,7 @@
 import type { StaticInvitePage } from './types'
 
 const invite: StaticInvitePage = {
+  "id": "25748191-d19f-417b-9f59-898bcc7c169a",
   "slug": "ck-ms49x50s-0cd797cc",
   "title": "文权测试大会",
   "venue": "北京",
@@ -35,6 +36,10 @@ const invite: StaticInvitePage = {
   ],
   "agenda": [],
   "backgroundImageUrl": null,
+  "confirmApi": {
+    "url": "https://api.example.com/activity/invite-confirm",
+    "timeoutMs": 10000
+  },
   "venueLead": null
 }
 

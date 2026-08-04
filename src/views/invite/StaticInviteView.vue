@@ -8,6 +8,7 @@ const attendanceName = ref('')
 const attendancePhone = ref('')
 const attendanceFormError = ref('')
 const attendanceSubmitted = ref(false)
+const submitting = ref(false)
 const modules = import.meta.glob('../../generated/checkin/invite/**/*.invite.ts', { eager: true }) as Record<string, { default: StaticInvitePage }>
 const invite = computed(() =>
   Object.values(modules)
@@ -44,7 +45,7 @@ const formatAgendaRange = (timeLabel: string, index: number) => {
   const end = nextStart || agendaEndTime.value
   return formatAgendaTime(end ? timeLabel + '-' + end : timeLabel)
 }
-const submitAttendance = () => {
+const submitAttendance = async () => {
   attendanceFormError.value = ''
   const name = attendanceName.value.trim()
   const phone = attendancePhone.value.trim().replace(/\s+/g, '')
@@ -56,9 +57,51 @@ const submitAttendance = () => {
     attendanceFormError.value = '请输入正确的 11 位手机号'
     return
   }
-  attendanceName.value = name
-  attendancePhone.value = phone
-  attendanceSubmitted.value = true
+  const currentInvite = invite.value
+  if (!currentInvite) {
+    attendanceFormError.value = '邀请函数据不存在'
+    return
+  }
+
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), currentInvite.confirmApi.timeoutMs)
+  submitting.value = true
+  try {
+    const response = await fetch(currentInvite.confirmApi.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activityId: currentInvite.id,
+        slug: currentInvite.slug,
+        name,
+        phone,
+        source: 'github-static-invite',
+      }),
+      signal: controller.signal,
+    })
+    const result = (await response.json().catch(() => null)) as {
+      error?: string
+      message?: string
+      ok?: boolean
+      success?: boolean
+    } | null
+    if (!response.ok || result?.ok === false || result?.success === false) {
+      throw new Error(result?.message || result?.error || '提交失败，请稍后重试')
+    }
+    attendanceName.value = name
+    attendancePhone.value = phone
+    attendanceSubmitted.value = true
+  } catch (error) {
+    attendanceFormError.value =
+      error instanceof DOMException && error.name === 'AbortError'
+        ? '提交超时，请稍后重试'
+        : error instanceof Error
+          ? error.message
+          : '提交失败，请稍后重试'
+  } finally {
+    window.clearTimeout(timeoutId)
+    submitting.value = false
+  }
 }
 </script>
 
@@ -124,7 +167,7 @@ const submitAttendance = () => {
             <input v-model="attendancePhone" type="tel" inputmode="numeric" maxlength="11" autocomplete="tel" placeholder="请输入手机号" class="attendance-input" />
           </label>
           <p v-if="attendanceFormError" class="attendance-error">{{ attendanceFormError }}</p>
-          <button type="submit" class="attendance-button">确认参加</button>
+          <button type="submit" class="attendance-button" :disabled="submitting">{{ submitting ? '提交中…' : '确认参加' }}</button>
         </form>
         <div v-else class="attendance-notice">
           <strong>已收到您的出席意向</strong>
@@ -142,5 +185,5 @@ const submitAttendance = () => {
 </template>
 
 <style scoped>
-.invite-page{min-height:100vh;background:radial-gradient(800px 400px at 90% -10%,rgba(251,146,60,.14),transparent 55%),linear-gradient(180deg,#fffbeb 0%,#f8fafc 48%,#f0fdfa 100%);color:#0f172a}.invite-shell{width:100%;max-width:28rem;margin:0 auto;padding:1.5rem 1rem 2.5rem;box-sizing:border-box}.invite-header{margin-bottom:1.25rem}.invite-header--with-image{min-height:15rem;display:flex;flex-direction:column;justify-content:flex-end;padding:1.25rem;border-radius:1.25rem;background-position:center;background-size:cover;box-sizing:border-box;box-shadow:0 12px 30px rgba(15,23,42,.18)}.invite-header--with-image .invite-eyebrow,.invite-header--with-image .invite-meta{color:rgba(255,255,255,.88)}.invite-header--with-image .invite-title{color:#fff}.invite-eyebrow{margin:0;font-size:.75rem;font-weight:600;letter-spacing:.06em;color:#c2410c}.invite-title{margin:.4rem 0 0;font-size:1.5rem;font-weight:900;letter-spacing:-.02em;line-height:1.3}.invite-meta{margin:.35rem 0 0;font-size:.875rem;color:#64748b}.invite-card{margin-top:1rem;border:1px solid rgba(148,163,184,.35);border-radius:1.25rem;background:rgba(255,255,255,.94);padding:1.25rem;box-sizing:border-box;box-shadow:0 10px 30px rgba(15,23,42,.04)}.invite-intro{font-size:.875rem;line-height:1.8;color:#475569}.invite-intro p{margin:1.25rem 0 0;white-space:pre-wrap}.invite-intro .intro-first{margin-top:0;font-weight:600;color:#0f172a}.invite-section-title{margin:0;font-size:.9375rem;font-weight:700;color:#0f172a}.invite-body{margin:.5rem 0 0;font-size:.875rem;line-height:1.75;color:#475569;white-space:pre-wrap}.invite-item-list{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.invite-item{border:1px solid #e2e8f0;border-radius:.9rem;background:#f8fafc;padding:.65rem .75rem}.invite-item-name{margin:0;font-size:.875rem;font-weight:600;color:#0f172a}.invite-item-role{margin:.18rem 0 0;font-size:.75rem;color:#0f766e}.invite-item-desc{margin:.18rem 0 0;font-size:.75rem;color:#64748b}.agenda-timeline{margin:.75rem 0 0;padding:0;list-style:none}.agenda-timeline__item{display:grid;grid-template-columns:4.75rem 1.5rem minmax(0,1fr)}.agenda-timeline__time{padding-top:.08rem;color:#0f172a;font-size:.875rem;line-height:1.5;white-space:nowrap}.agenda-timeline__axis{position:relative;display:flex;justify-content:center}.agenda-timeline__axis::after{position:absolute;top:.85rem;bottom:0;border-left:1px dotted #94a3b8;content:""}.agenda-timeline__item:last-child .agenda-timeline__axis::after{display:none}.agenda-timeline__dot{position:relative;z-index:1;display:block;box-sizing:border-box;width:.65rem;height:.65rem;flex:0 0 .65rem;margin-top:.16rem;border:0!important;border-radius:50%;background:#0f6cbd!important}.agenda-timeline__dot::after{position:absolute!important;top:50%;left:50%;width:.28rem!important;height:.28rem!important;box-sizing:border-box!important;border:0!important;border-radius:50%!important;background:#fff!important;transform:translate(-50%,-50%);content:""}.agenda-timeline__content{padding:0 0 1.2rem .35rem}.agenda-timeline__item:last-child .agenda-timeline__content{padding-bottom:0}.agenda-timeline__content p{margin:0;color:#075eac;font-size:.9rem;font-weight:700;line-height:1.5}.agenda-timeline__content span{display:block;margin-top:.3rem;color:#0f172a;font-size:.75rem;line-height:1.55;white-space:pre-wrap}.attendance-card{display:grid;gap:1rem}.attendance-form{display:grid;gap:1rem}.attendance-label{display:grid;gap:.45rem;font-size:.8125rem;font-weight:600;color:#334155}.attendance-input{width:100%;box-sizing:border-box;border:1px solid #dbe3ee;border-radius:.9rem;background:#fff;padding:.8rem .9rem;color:#0f172a;font:inherit;outline:none}.attendance-input:focus{border-color:#c2410c;box-shadow:0 0 0 3px rgba(194,65,12,.1)}.attendance-error{margin:0;color:#dc2626;font-size:.75rem}.attendance-copy{margin:0;font-size:.8125rem;line-height:1.6;color:#64748b}.attendance-button{width:100%;border:0;border-radius:.75rem;background:#c2410c;padding:.8rem 1rem;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer}.attendance-button:hover{background:#9a3412}.attendance-notice{display:grid;gap:.3rem;margin:0;border-radius:.75rem;background:#fff7ed;padding:.85rem .9rem;font-size:.8125rem;line-height:1.6;color:#9a3412}.venue-lead{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-top:1rem;border:1px dashed rgba(13,148,136,.35);border-radius:1.25rem;background:rgba(240,253,250,.85);padding:1rem 1.15rem;color:inherit;text-decoration:none}.venue-lead p{margin:0;font-size:.875rem;font-weight:700}.venue-lead span{display:block;margin-top:.25rem;font-size:.75rem;line-height:1.6;color:#64748b}.venue-lead b{flex:0 0 auto;font-size:.875rem;color:#0f766e}.empty{min-height:100vh;padding:5rem 2rem;text-align:center;color:#64748b}@media(max-width:480px){.invite-shell{padding:1.25rem .75rem 2rem}.invite-header--with-image{min-height:13rem;padding:1rem}.invite-card{padding:1rem}}
+.invite-page{min-height:100vh;background:radial-gradient(800px 400px at 90% -10%,rgba(251,146,60,.14),transparent 55%),linear-gradient(180deg,#fffbeb 0%,#f8fafc 48%,#f0fdfa 100%);color:#0f172a}.invite-shell{width:100%;max-width:28rem;margin:0 auto;padding:1.5rem 1rem 2.5rem;box-sizing:border-box}.invite-header{margin-bottom:1.25rem}.invite-header--with-image{min-height:15rem;display:flex;flex-direction:column;justify-content:flex-end;padding:1.25rem;border-radius:1.25rem;background-position:center;background-size:cover;box-sizing:border-box;box-shadow:0 12px 30px rgba(15,23,42,.18)}.invite-header--with-image .invite-eyebrow,.invite-header--with-image .invite-meta{color:rgba(255,255,255,.88)}.invite-header--with-image .invite-title{color:#fff}.invite-eyebrow{margin:0;font-size:.75rem;font-weight:600;letter-spacing:.06em;color:#c2410c}.invite-title{margin:.4rem 0 0;font-size:1.5rem;font-weight:900;letter-spacing:-.02em;line-height:1.3}.invite-meta{margin:.35rem 0 0;font-size:.875rem;color:#64748b}.invite-card{margin-top:1rem;border:1px solid rgba(148,163,184,.35);border-radius:1.25rem;background:rgba(255,255,255,.94);padding:1.25rem;box-sizing:border-box;box-shadow:0 10px 30px rgba(15,23,42,.04)}.invite-intro{font-size:.875rem;line-height:1.8;color:#475569}.invite-intro p{margin:1.25rem 0 0;white-space:pre-wrap}.invite-intro .intro-first{margin-top:0;font-weight:600;color:#0f172a}.invite-section-title{margin:0;font-size:.9375rem;font-weight:700;color:#0f172a}.invite-body{margin:.5rem 0 0;font-size:.875rem;line-height:1.75;color:#475569;white-space:pre-wrap}.invite-item-list{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.invite-item{border:1px solid #e2e8f0;border-radius:.9rem;background:#f8fafc;padding:.65rem .75rem}.invite-item-name{margin:0;font-size:.875rem;font-weight:600;color:#0f172a}.invite-item-role{margin:.18rem 0 0;font-size:.75rem;color:#0f766e}.invite-item-desc{margin:.18rem 0 0;font-size:.75rem;color:#64748b}.agenda-timeline{margin:.75rem 0 0;padding:0;list-style:none}.agenda-timeline__item{display:grid;grid-template-columns:4.75rem 1.5rem minmax(0,1fr)}.agenda-timeline__time{padding-top:.08rem;color:#0f172a;font-size:.875rem;line-height:1.5;white-space:nowrap}.agenda-timeline__axis{position:relative;display:flex;justify-content:center}.agenda-timeline__axis::after{position:absolute;top:.85rem;bottom:0;border-left:1px dotted #94a3b8;content:""}.agenda-timeline__item:last-child .agenda-timeline__axis::after{display:none}.agenda-timeline__dot{position:relative;z-index:1;display:block;box-sizing:border-box;width:.65rem;height:.65rem;flex:0 0 .65rem;margin-top:.16rem;border:0!important;border-radius:50%;background:#0f6cbd!important}.agenda-timeline__dot::after{position:absolute!important;top:50%;left:50%;width:.28rem!important;height:.28rem!important;box-sizing:border-box!important;border:0!important;border-radius:50%!important;background:#fff!important;transform:translate(-50%,-50%);content:""}.agenda-timeline__content{padding:0 0 1.2rem .35rem}.agenda-timeline__item:last-child .agenda-timeline__content{padding-bottom:0}.agenda-timeline__content p{margin:0;color:#075eac;font-size:.9rem;font-weight:700;line-height:1.5}.agenda-timeline__content span{display:block;margin-top:.3rem;color:#0f172a;font-size:.75rem;line-height:1.55;white-space:pre-wrap}.attendance-card{display:grid;gap:1rem}.attendance-form{display:grid;gap:1rem}.attendance-label{display:grid;gap:.45rem;font-size:.8125rem;font-weight:600;color:#334155}.attendance-input{width:100%;box-sizing:border-box;border:1px solid #dbe3ee;border-radius:.9rem;background:#fff;padding:.8rem .9rem;color:#0f172a;font:inherit;outline:none}.attendance-input:focus{border-color:#c2410c;box-shadow:0 0 0 3px rgba(194,65,12,.1)}.attendance-error{margin:0;color:#dc2626;font-size:.75rem}.attendance-copy{margin:0;font-size:.8125rem;line-height:1.6;color:#64748b}.attendance-button{width:100%;border:0;border-radius:.75rem;background:#c2410c;padding:.8rem 1rem;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer}.attendance-button:hover{background:#9a3412}.attendance-button:disabled{cursor:not-allowed;opacity:.65}.attendance-notice{display:grid;gap:.3rem;margin:0;border-radius:.75rem;background:#fff7ed;padding:.85rem .9rem;font-size:.8125rem;line-height:1.6;color:#9a3412}.venue-lead{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-top:1rem;border:1px dashed rgba(13,148,136,.35);border-radius:1.25rem;background:rgba(240,253,250,.85);padding:1rem 1.15rem;color:inherit;text-decoration:none}.venue-lead p{margin:0;font-size:.875rem;font-weight:700}.venue-lead span{display:block;margin-top:.25rem;font-size:.75rem;line-height:1.6;color:#64748b}.venue-lead b{flex:0 0 auto;font-size:.875rem;color:#0f766e}.empty{min-height:100vh;padding:5rem 2rem;text-align:center;color:#64748b}@media(max-width:480px){.invite-shell{padding:1.25rem .75rem 2rem}.invite-header--with-image{min-height:13rem;padding:1rem}.invite-card{padding:1rem}}
 </style>
